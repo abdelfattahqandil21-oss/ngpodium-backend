@@ -35,8 +35,8 @@ export class AuthController {
       nickname: dto.fullName ?? undefined,
     });
     this.setRefreshCookie(res, result.refresh_token);
-    const { refresh_token, ...rest } = result;
-    return rest;
+    // Return refresh_token in body as requested by frontend, while still setting httpOnly cookie
+    return result;
   }
 
   @Post('login')
@@ -46,8 +46,8 @@ export class AuthController {
     const user = req.user as any; // from Local strategy
     const result = await this.auth.login({ id: user.id, username: user.username });
     this.setRefreshCookie(res, result.refresh_token);
-    const { refresh_token, ...rest } = result;
-    return rest;
+    // Return refresh_token in body as requested by frontend, while still setting httpOnly cookie
+    return result;
   }
 
   @Get('profile')

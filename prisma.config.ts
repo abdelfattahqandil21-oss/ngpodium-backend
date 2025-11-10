@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { config as dotenvConfig } from "dotenv";
+// Load only .env (user requested single source)
+dotenvConfig({ path: ".env" });
 import { defineConfig } from "prisma/config";
 
 export default defineConfig({

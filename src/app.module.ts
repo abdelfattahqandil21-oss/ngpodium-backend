@@ -10,7 +10,7 @@ import { PostsModule } from './modules/posts/posts.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
+      envFilePath: '.env',
     }),
     CommonModule,
     UsersModule,
