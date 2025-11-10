@@ -9,9 +9,12 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  username  String
+  username  String   @unique
   email     String   @unique
   password  String
+  nickname  String?
+  image     String?
+  phone     String?
   posts     Post[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -19,10 +22,15 @@ model User {
 
 model Post {
   id        Int      @id @default(autoincrement())
+  slug      String   @unique
   title     String
   content   String
+  coverImage String?
+  tags      String[]
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([authorId])
 }

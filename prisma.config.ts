@@ -1,4 +1,4 @@
-import "dotenv/config"; // ده يضمن قراءة أي متغيرات من .env
+import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
 export default defineConfig({

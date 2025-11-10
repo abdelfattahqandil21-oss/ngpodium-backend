@@ -1,10 +1,10 @@
 export interface User {
-  userId: number;
-  userName: string;
-  usernickName?: string;
-  userEmail: string;
-  userImg?: string;
-  userPhone?: string;
+  id: number;
+  username: string;
+  nickname?: string;
+  email: string;
+  image?: string;
+  phone?: string;
   createdAt: Date;
   updatedAt: Date;
 }

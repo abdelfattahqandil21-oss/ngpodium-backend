@@ -1,26 +1,33 @@
-import { IsArray, IsOptional, IsString, ArrayUnique, IsUrl } from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsPositive, IsString, ArrayUnique, IsUrl, Matches, MinLength } from 'class-validator';
 
 export class UpdatePostDto {
   @IsString()
   @IsOptional()
-  postSlug?: string;
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'slug must be lowercase kebab-case' })
+  slug?: string;
 
   @IsString()
   @IsOptional()
-  postTitle?: string;
+  @MinLength(3)
+  title?: string;
 
   @IsString()
   @IsOptional()
-  @IsUrl({ require_protocol: false }, { message: 'postCoveredImg must be a valid URL' })
-  postCoveredImg?: string;
+  @IsUrl({ require_protocol: false }, { message: 'coverImage must be a valid URL' })
+  coverImage?: string;
 
   @IsString()
   @IsOptional()
-  postContent?: string;
+  content?: string;
 
   @IsArray()
   @ArrayUnique()
   @IsString({ each: true })
   @IsOptional()
-  postTags?: string[];
+  tags?: string[];
+
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  authorId?: number;
 }

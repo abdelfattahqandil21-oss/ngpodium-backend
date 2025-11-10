@@ -1,10 +1,11 @@
 export interface Post {
-  postId: number;
-  postSlug: string;
-  postTitle: string;
-  postCoveredImg?: string;
-  postContent: string;
-  postTags: string[];
+  id: number;
+  slug: string;
+  title: string;
+  coverImage?: string;
+  content: string;
+  tags: string[];
+  authorId: number;
   createdAt: Date;
-  modifiedAt: Date;
+  updatedAt: Date;
 }
