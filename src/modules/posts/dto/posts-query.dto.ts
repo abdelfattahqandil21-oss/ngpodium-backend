@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PostsQueryDto {
@@ -24,4 +24,19 @@ export class PostsQueryDto {
   @IsIn(['asc', 'desc'])
   @IsOptional()
   order?: 'asc' | 'desc' = 'desc';
+
+  @ApiPropertyOptional({ description: 'Search in content, slug, title, or tags', example: 'nestjs' })
+  @IsString()
+  @IsOptional()
+  q?: string;
+
+  @ApiPropertyOptional({ description: 'Comma-separated tags filter e.g. js,ts', example: 'js,ts' })
+  @IsString()
+  @IsOptional()
+  tags?: string; // will be split by controller into array
+
+  @ApiPropertyOptional({ description: 'Filter by author id', example: 1 })
+  @IsInt()
+  @IsOptional()
+  authorId?: number;
 }

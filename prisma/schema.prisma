@@ -16,6 +16,7 @@ model User {
   image     String?
   phone     String?
   refreshTokenHash String?
+  headline  String?
   posts     Post[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
