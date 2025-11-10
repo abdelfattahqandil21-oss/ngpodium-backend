@@ -92,9 +92,9 @@ export class AuthService {
   async refreshTokens(userId: number, currentRt: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, username: true, refreshTokenHash: true } as any });
     if (!user || !user.refreshTokenHash) throw new UnauthorizedException();
-    const valid = await bcrypt.compare(currentRt, user.refreshTokenHash);
+    const valid = await bcrypt.compare(currentRt as unknown as string, user.refreshTokenHash as unknown as string);
     if (!valid) throw new UnauthorizedException();
-    return this.issueAccessAndRefresh(user.id, (user as any).username);
+    return this.issueAccessAndRefresh(Number((user as any).id), String((user as any).username));
   }
 
   async refreshByToken(rt: string) {
@@ -131,13 +131,13 @@ export class AuthService {
 
     const payload = { sub: userId, username };
     const access_token = await this.jwt.signAsync(payload, {
-      secret: this.config.get<string>('JWT_SECRET'),
-      expiresIn: accessExpiresIn,
+      secret: this.config.get<string>('JWT_SECRET')!,
+      expiresIn: this.parseExpirySeconds(accessExpiresIn),
     });
 
     const refresh_token = await this.jwt.signAsync(payload, {
-      secret: refreshSecret,
-      expiresIn: refreshExpiresIn,
+      secret: refreshSecret!,
+      expiresIn: this.parseExpirySeconds(refreshExpiresIn),
     });
 
     const hash = await bcrypt.hash(refresh_token, 10);
