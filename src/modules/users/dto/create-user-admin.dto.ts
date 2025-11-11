@@ -17,7 +17,7 @@ export class CreateUserAdminDto {
   email: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.png' })
-  @IsUrl({ require_protocol: false })
+  @IsString()
   @IsOptional()
   image?: string;
 

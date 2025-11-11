@@ -1,14 +1,17 @@
 import { IsIn, IsInt, IsOptional, Max, Min, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class PostsQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1 })
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   @Min(1)
@@ -36,6 +39,7 @@ export class PostsQueryDto {
   tags?: string; // will be split by controller into array
 
   @ApiPropertyOptional({ description: 'Filter by author id', example: 1 })
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   authorId?: number;

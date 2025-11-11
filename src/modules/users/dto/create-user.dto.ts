@@ -12,7 +12,7 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
-  @IsUrl({ require_protocol: false })
+  @IsString()
   @IsOptional()
   image?: string;
 

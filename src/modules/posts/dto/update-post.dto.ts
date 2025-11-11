@@ -14,10 +14,9 @@ export class UpdatePostDto {
   @MinLength(3)
   title?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/cover-2.png' })
+  @ApiPropertyOptional({ example: '/uploads/cover/image.jpg' })
   @IsString()
   @IsOptional()
-  @IsUrl({ require_protocol: false }, { message: 'coverImage must be a valid URL' })
   coverImage?: string;
 
   @ApiPropertyOptional({ example: 'Edited content for the post...' })

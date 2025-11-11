@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { CreatePostDto } from '../../dto/create-post.dto';
 import { UpdatePostDto } from '../../dto/update-post.dto';
@@ -6,6 +6,8 @@ import { UpdatePostDto } from '../../dto/update-post.dto';
 
 @Injectable()
 export class PostsService {
+  private readonly logger = new Logger(PostsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(authorId: number, dto: CreatePostDto) {
@@ -18,49 +20,77 @@ export class PostsService {
         tags: dto.tags ?? [],
         author: { connect: { id: authorId } },
       };
-      return await this.prisma.post.create({
+      const post = await this.prisma.post.create({
         data,
         select: this.selectPost(),
       });
+      this.logger.log(`Post created: ${post.id} by user ${authorId}`);
+      return post;
     } catch (e: any) {
+      this.logger.error(`Failed to create post: ${e.message}`);
       if (e?.code === 'P2002') throw new ConflictException('Slug already exists');
       throw e;
     }
   }
 
   async findAll(params: { page?: number; limit?: number; orderBy?: 'createdAt' | 'updatedAt' | 'title'; order?: 'asc' | 'desc'; authorId?: number; tags?: string[]; q?: string }) {
-    const page = Number(params.page ?? 1);
-    const limit = Math.min(Number(params.limit ?? 20), 100);
+    const page = Math.max(1, Math.floor(Number(params.page ?? 1)));
+    const limit = Math.min(100, Math.max(1, Math.floor(Number(params.limit ?? 20))));
     const skip = (page - 1) * limit;
     const orderByField = params.orderBy ?? 'createdAt';
     const order: 'asc' | 'desc' = params.order === 'asc' ? 'asc' : 'desc';
 
-    const where = {
-      AND: [
-        params.authorId ? { authorId: params.authorId } : {},
-        params.tags && params.tags.length ? { tags: { hasSome: params.tags } } : {},
-        params.q
-          ? {
-              OR: [
-                { content: { contains: params.q, mode: 'insensitive' } },
-                { slug: { contains: params.q, mode: 'insensitive' } },
-                { tags: { has: params.q } },
-                { title: { contains: params.q, mode: 'insensitive' } },
-                { author: { username: { contains: params.q, mode: 'insensitive' } } },
-                { author: { nickname: { contains: params.q, mode: 'insensitive' } } },
-              ],
-            }
-          : {},
-      ],
-    };
-
-    return this.prisma.post.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { [orderByField]: order },
-      select: this.selectPost(),
+    const where = this.buildWhereCondition({
+      authorId: params.authorId,
+      tags: params.tags,
+      q: params.q,
     });
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.post.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [orderByField]: order },
+        select: this.selectPost(),
+      }),
+      this.prisma.post.count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findAllOffset(params: { offset?: number; limit?: number }) {
+    const offset = Math.max(Number(params.offset ?? 0), 0);
+    const take = Math.min(Math.max(Number(params.limit ?? 20), 1), 100);
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.post.findMany({
+        skip: offset,
+        take,
+        orderBy: { createdAt: 'desc' },
+        select: this.selectPost(),
+      }),
+      this.prisma.post.count(),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        offset,
+        limit: take,
+        hasMore: offset + items.length < total,
+      },
+    };
   }
 
   async findBySlug(slug: string) {
@@ -96,6 +126,27 @@ export class PostsService {
     if (!post) throw new NotFoundException('Post not found');
     if (post.authorId !== authorId) throw new ForbiddenException('Not allowed');
     return this.prisma.post.delete({ where: { id }, select: this.selectPost() });
+  }
+
+  private buildWhereCondition(params: { authorId?: number; tags?: string[]; q?: string }) {
+    return {
+      AND: [
+        params.authorId ? { authorId: params.authorId } : {},
+        params.tags?.length ? { tags: { hasSome: params.tags } } : {},
+        params.q
+          ? {
+              OR: [
+                { content: { contains: params.q, mode: 'insensitive' } },
+                { slug: { contains: params.q, mode: 'insensitive' } },
+                { tags: { has: params.q } },
+                { title: { contains: params.q, mode: 'insensitive' } },
+                { author: { username: { contains: params.q, mode: 'insensitive' } } },
+                { author: { nickname: { contains: params.q, mode: 'insensitive' } } },
+              ],
+            }
+          : {},
+      ],
+    };
   }
 
   private selectPost() {

@@ -3,9 +3,14 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Enable CORS
+  app.enableCors();
 
   app.use(cookieParser());
 
@@ -17,6 +22,16 @@ async function bootstrap() {
     }),
   );
 
+  // Serve static files from uploads directory
+  const uploadsPath = join(process.cwd(), 'uploads');
+  console.log('Serving static files from:', uploadsPath);
+  app.useStaticAssets(uploadsPath, {
+    prefix: '/uploads/',
+  });
+
+  // Set global prefix for API routes
+  app.setGlobalPrefix('api/v1');
+
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('NgPodium API')
@@ -26,12 +41,12 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api/v1/docs', app, document);
   }
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
   console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(`Swagger is running on: ${await app.getUrl()}/api`);
+  console.log(`Swagger is running on: ${await app.getUrl()}/api/v1/docs`);
 }
 bootstrap();

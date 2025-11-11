@@ -12,10 +12,9 @@ export class CreatePostDto {
   @MinLength(3)
   title: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/cover.png' })
+  @ApiPropertyOptional({ example: '/uploads/cover/image.jpg' })
   @IsString()
   @IsOptional()
-  @IsUrl({ require_protocol: false }, { message: 'coverImage must be a valid URL' })
   coverImage?: string;
 
   @ApiProperty({ example: 'This is the content of my first post...' })

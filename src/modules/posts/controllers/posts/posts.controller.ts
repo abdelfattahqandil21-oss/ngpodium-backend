@@ -6,6 +6,7 @@ import { PostsService } from '../../services/posts/posts.service';
 import { CreatePostDto } from '../../dto/create-post.dto';
 import { UpdatePostDto } from '../../dto/update-post.dto';
 import { PostsQueryDto } from '../../dto/posts-query.dto';
+import { PostsOffsetQueryDto } from '../../dto/posts-offset-query.dto';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -35,6 +36,12 @@ export class PostsController {
       tags: tagsArr,
       q: q.q,
     });
+  }
+
+  @Get('feed')
+  @ApiOperation({ summary: 'List posts using offset/limit pagination' })
+  feed(@Query() query: PostsOffsetQueryDto) {
+    return this.posts.findAllOffset(query);
   }
 
   @Get(':slug')

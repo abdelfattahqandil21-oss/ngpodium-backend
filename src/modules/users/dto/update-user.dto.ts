@@ -19,7 +19,7 @@ export class UpdateUserDto {
   email?: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.png' })
-  @IsUrl({ require_protocol: false })
+  @IsString()
   @IsOptional()
   image?: string;
 
