@@ -1,0 +1,104 @@
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private refreshInFlight: Promise<void> | null = null;
+
+  constructor(private http: HttpClient, private storage: TokenStorageService) {}
+
+  refreshOnce(): Promise<void> {
+    if (this.refreshInFlight) return this.refreshInFlight;
+    this.refreshInFlight = this.http.post<{
+      access_token: string;
+      expiresAt: number;
+      // ممكن ترجع refresh_token لو عايز تدوّر
+      refresh_token?: string;
+    }>('/auth/refresh', { refresh_token: this.storage.refreshToken }).toPromise()
+      .then(res => {
+        this.storage.accessToken = res.access_token;
+        this.storage.expiresAt = res.expiresAt;
+        if (res.refresh_token) this.storage.refreshToken = res.refresh_token;
+      })
+      .finally(() => { this.refreshInFlight = null; });
+    return this.refreshInFlight;
+  }
+}
+
+
+
+
+
+
+
+
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  private scheduled = false;
+
+  constructor(private storage: TokenStorageService, private auth: AuthService) {
+    this.scheduleRefresh();
+  }
+
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const withAuth = this.storage.accessToken
+      ? req.clone({ setHeaders: { Authorization: `Bearer ${this.storage.accessToken}` } })
+      : req;
+
+    return next.handle(withAuth).pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 401 && !withAuth.headers.has('X-Retry')) {
+          return from(this.auth.refreshOnce()).pipe(
+            switchMap(() => {
+              const retried = withAuth.clone({
+                setHeaders: { Authorization: `Bearer ${this.storage.accessToken || ''}`, 'X-Retry': '1' }
+              });
+              return next.handle(retried);
+            }),
+            catchError(e => throwError(() => e))
+          );
+        }
+        return throwError(() => err);
+      })
+    );
+  }
+
+  private scheduleRefresh() {
+    if (this.scheduled) return;
+    this.scheduled = true;
+
+    const tick = () => {
+      const ms = this.storage.expiresAt - Date.now() - 120_000; // قبل الانتهاء بدقيقتين
+      const wait = Math.max(ms, 10_000);
+      setTimeout(async () => {
+        try {
+          if (Date.now() >= this.storage.expiresAt - 120_000 && this.storage.refreshToken) {
+            await this.auth.refreshOnce();
+          }
+        } finally {
+          tick();
+        }
+      }, wait);
+    };
+    tick();
+  }
+}
+
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withInterceptors([ (req, next) => inject(AuthInterceptor).intercept(req, next) ])),
+  ],
+};
+
+
+
+
+providers: [
+  { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+],
+
+
+
+
+this.storage.accessToken = res.access_token;
+this.storage.refreshToken = res.refresh_token; // الباك يرجعها
+this.storage.expiresAt = res.expiresAt;

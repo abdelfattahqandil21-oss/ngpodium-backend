@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtGuard } from '../../../auth/guards/jwt.guard';
 import { PostsService } from '../../services/posts/posts.service';
@@ -14,6 +14,7 @@ export class PostsController {
 
   @Post()
   @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create post (author = current user)' })
   @ApiBody({ type: CreatePostDto })
   create(@Req() req: Request, @Body() dto: CreatePostDto) {
@@ -44,6 +45,7 @@ export class PostsController {
 
   @Patch(':id')
   @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update post (owner only)' })
   @ApiBody({ type: UpdatePostDto })
   update(@Param('id', ParseIntPipe) id: number, @Req() req: Request, @Body() dto: UpdatePostDto) {
@@ -53,6 +55,7 @@ export class PostsController {
 
   @Delete(':id')
   @UseGuards(JwtGuard)
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Delete post (owner only)' })
   remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
     const userId = (req.user as any).sub as number;

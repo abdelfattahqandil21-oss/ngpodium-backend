@@ -3,7 +3,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { UpdateUserDto } from '../../../users/dto/update-user.dto';
 import { CreateUserAdminDto } from '../../../users/dto/create-user-admin.dto';
 import * as bcrypt from 'bcrypt';
-import { Prisma } from '@prisma/client';
+// NOTE: Avoid importing Prisma namespace due to module resolution; use string literal types instead.
 
 @Injectable()
 export class UsersService {
@@ -83,7 +83,7 @@ export class UsersService {
     const limit = Math.min(Number(query?.limit ?? 20), 100);
     const skip = (page - 1) * limit;
     const orderByField = query?.orderBy ?? 'createdAt';
-    const order: Prisma.SortOrder = query?.order === 'asc' ? 'asc' : 'desc';
+    const order: 'asc' | 'desc' = query?.order === 'asc' ? 'asc' : 'desc';
 
     return this.prisma.post.findMany({
       where: { authorId: userId },

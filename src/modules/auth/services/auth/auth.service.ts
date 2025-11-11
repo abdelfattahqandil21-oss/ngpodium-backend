@@ -97,15 +97,61 @@ export class AuthService {
     return this.issueAccessAndRefresh(Number((user as any).id), String((user as any).username));
   }
 
-  async refreshByToken(rt: string) {
+  async refreshByToken(rt: string, accessToken?: string) {
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: number; username: string }>(rt, {
+      // Verify refresh token
+      const refreshPayload = await this.jwt.verifyAsync<{ sub: number; username: string }>(rt, {
         secret: this.config.get<string>('JWT_REFRESH_SECRET') || this.config.get<string>('JWT_SECRET'),
       });
-      return this.refreshTokens(payload.sub, rt);
+      
+      // If access token provided, verify it matches refresh token (Proof of Possession)
+      if (accessToken) {
+        try {
+          const accessPayload = await this.jwt.verifyAsync<{ sub: number }>(accessToken, {
+            secret: this.config.get<string>('JWT_SECRET')!,
+            ignoreExpiration: true, // Allow expired access tokens for PoP
+          });
+          // Verify both tokens belong to same user
+          if (accessPayload.sub !== refreshPayload.sub) {
+            throw new UnauthorizedException('Token mismatch');
+          }
+        } catch (err: any) {
+          // If verification failed for reasons other than expiration, reject
+          if (err?.message === 'Token mismatch') throw err;
+          throw new UnauthorizedException('Invalid access token');
+        }
+      }
+      
+      // Verify refresh token hash in DB
+      const user = await this.prisma.user.findUnique({ 
+        where: { id: refreshPayload.sub }, 
+        select: { id: true, username: true, refreshTokenHash: true } as any 
+      });
+      if (!user || !user.refreshTokenHash) throw new UnauthorizedException();
+      const valid = await bcrypt.compare(rt, user.refreshTokenHash as unknown as string);
+      if (!valid) throw new UnauthorizedException();
+      
+      // Issue only new access token (refresh stays the same)
+      return this.issueAccessOnly(refreshPayload.sub, refreshPayload.username);
     } catch {
       throw new UnauthorizedException();
     }
+  }
+
+  private async issueAccessOnly(userId: number, username: string) {
+    const accessExpiresIn = this.config.get<string>('JWT_EXPIRES_IN') || '30m';
+    const payload = { sub: userId, username };
+    
+    const access_token = await this.jwt.signAsync(payload, {
+      secret: this.config.get<string>('JWT_SECRET')!,
+      expiresIn: this.parseExpirySeconds(accessExpiresIn),
+    });
+
+    const now = Date.now();
+    const expiresInSec = this.parseExpirySeconds(accessExpiresIn);
+    const expiresAt = now + expiresInSec * 1000;
+
+    return { access_token, expiresIn: expiresInSec, expiresAt };
   }
 
   async logout(userId: number) {

@@ -30,4 +30,9 @@ export class CreateUserAdminDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @ApiPropertyOptional({ example: 'Frontend Web Developer | Angular Enthusiast' })
+  @IsString()
+  @IsOptional()
+  headline?: string;
 }

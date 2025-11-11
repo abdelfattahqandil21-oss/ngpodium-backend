@@ -2,7 +2,7 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { CreatePostDto } from '../../dto/create-post.dto';
 import { UpdatePostDto } from '../../dto/update-post.dto';
-import { Prisma } from '@prisma/client';
+  
 
 @Injectable()
 export class PostsService {
@@ -10,7 +10,7 @@ export class PostsService {
 
   async create(authorId: number, dto: CreatePostDto) {
     try {
-      const data: Prisma.PostCreateInput = {
+      const data = {
         slug: dto.slug,
         title: dto.title,
         content: dto.content,
@@ -33,9 +33,9 @@ export class PostsService {
     const limit = Math.min(Number(params.limit ?? 20), 100);
     const skip = (page - 1) * limit;
     const orderByField = params.orderBy ?? 'createdAt';
-    const order: Prisma.SortOrder = params.order === 'asc' ? 'asc' : 'desc';
+    const order: 'asc' | 'desc' = params.order === 'asc' ? 'asc' : 'desc';
 
-    const where: Prisma.PostWhereInput = {
+    const where = {
       AND: [
         params.authorId ? { authorId: params.authorId } : {},
         params.tags && params.tags.length ? { tags: { hasSome: params.tags } } : {},

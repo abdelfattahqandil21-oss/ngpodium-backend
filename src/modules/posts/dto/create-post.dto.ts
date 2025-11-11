@@ -1,23 +1,29 @@
 import { IsArray, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, ArrayUnique, IsUrl, Matches, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePostDto {
+  @ApiProperty({ example: 'my-first-post', description: 'Lowercase kebab-case unique slug' })
   @IsString()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'slug must be lowercase kebab-case' })
   slug: string;
 
+  @ApiProperty({ example: 'My First Post' })
   @IsString()
   @MinLength(3)
   title: string;
 
+  @ApiPropertyOptional({ example: 'https://example.com/cover.png' })
   @IsString()
   @IsOptional()
   @IsUrl({ require_protocol: false }, { message: 'coverImage must be a valid URL' })
   coverImage?: string;
 
+  @ApiProperty({ example: 'This is the content of my first post...' })
   @IsString()
   @IsNotEmpty()
   content: string;
 
+  @ApiPropertyOptional({ example: ['nestjs', 'prisma'] })
   @IsArray()
   @ArrayUnique()
   @IsString({ each: true })
