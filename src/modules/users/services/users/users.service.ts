@@ -24,10 +24,15 @@ export class UsersService {
     });
   }
 
-  findAll() {
-    return this.prisma.user.findMany({
-      select: { id: true, username: true, email: true, image: true, nickname: true, phone: true, createdAt: true, updatedAt: true },
-    });
+  async findAll() {
+    try {
+      return await this.prisma.user.findMany({
+        select: { id: true, username: true, email: true, image: true, nickname: true, phone: true, createdAt: true, updatedAt: true },
+      });
+    } catch (error) {
+      console.error('Error in findAll users:', error);
+      throw error;
+    }
   }
 
   async findOne(id: number) {

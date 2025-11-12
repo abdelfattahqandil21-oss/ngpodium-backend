@@ -57,5 +57,5 @@ RUN mkdir -p uploads/profile uploads/cover
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["pnpm", "start:prod"]
+# Start the application with migrations
+CMD ["pnpm", "railway:start"]
