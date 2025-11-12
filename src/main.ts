@@ -7,6 +7,19 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
+  // Validate required environment variables
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+
+  console.log('Starting NgPodium Backend...');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('DATABASE_URL configured:', !!process.env.DATABASE_URL);
+  console.log('JWT_SECRET configured:', !!process.env.JWT_SECRET);
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS with production configuration
@@ -49,8 +62,12 @@ async function bootstrap() {
   }
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Swagger is running on: ${await app.getUrl()}/api/v1/docs`);
 }
-bootstrap();
+
+bootstrap().catch(err => {
+  console.error('Error starting application:', err);
+  process.exit(1);
+});
