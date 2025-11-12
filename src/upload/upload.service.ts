@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { unlinkSync } from 'fs';
 import sharp from 'sharp';
-import { join } from 'path';
+import { join, posix } from 'path';
 
 @Injectable()
 export class UploadService {
@@ -14,8 +14,8 @@ export class UploadService {
   ): Promise<{ filename: string; path: string }> {
     // Generate WebP filename (replace extension with .webp)
     const originalName = file.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '');
-    const webpFilename = `${originalName}.webp`;
-    const outputPath = join('./uploads', type, webpFilename);
+    const webpFilename = `${originalName}-optimized.webp`;
+    const outputPath = join(process.cwd(), 'uploads', type, webpFilename);
 
     // Convert to WebP with optimization
     await sharp(file.path)
@@ -42,7 +42,7 @@ export class UploadService {
 
     return {
       filename: webpFilename,
-      path: outputPath,
+      path: posix.join('.', 'uploads', type, webpFilename),
     };
   }
 

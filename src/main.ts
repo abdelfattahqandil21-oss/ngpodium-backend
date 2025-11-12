@@ -9,8 +9,12 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS
-  app.enableCors();
+  // Enable CORS with production configuration
+  const corsOrigin = process.env.CORS_ORIGIN || '*';
+  app.enableCors({
+    origin: corsOrigin,
+    credentials: true,
+  });
 
   app.use(cookieParser());
 
