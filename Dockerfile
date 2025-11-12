@@ -35,9 +35,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
-# Install production dependencies and prisma
-RUN pnpm install --frozen-lockfile --prod
-RUN pnpm add prisma
+# Install production dependencies and prisma (without postinstall)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+RUN pnpm add prisma --ignore-scripts
 
 # Generate Prisma client
 RUN pnpm prisma generate
