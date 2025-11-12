@@ -49,17 +49,16 @@ async function bootstrap() {
   // Set global prefix for API routes
   app.setGlobalPrefix('api/v1');
 
-  if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('NgPodium API')
-      .setDescription('API documentation for NgPodium')
-      .setVersion('1.0')
-      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
-      .build();
+  // Setup Swagger documentation (enabled in all environments)
+  const config = new DocumentBuilder()
+    .setTitle('NgPodium API')
+    .setDescription('API documentation for NgPodium')
+    .setVersion('1.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/v1/docs', app, document);
-  }
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/v1/docs', app, document);
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port, '0.0.0.0');
