@@ -22,6 +22,9 @@ RUN pnpm prisma:generate
 # Build the application
 RUN pnpm build
 
+# List dist directory to verify build
+RUN ls -la dist/
+
 # Production stage
 FROM node:18-alpine AS production
 
@@ -44,6 +47,9 @@ RUN pnpm prisma generate
 
 # Copy built application from base stage
 COPY --from=base /app/dist ./dist
+
+# Verify copied files
+RUN ls -la dist/
 
 # Create uploads directory
 RUN mkdir -p uploads/profile uploads/cover
